@@ -1,0 +1,64 @@
+/*
+ * The display screen, ported unchanged from the prototype (Service Timer.html)
+ * so it matches what has run in live services. Its colours and font come from
+ * each church's own settings, so it does not use the Church Workflow theme.
+ * Every rule is scoped to #display; the control panel uses Tailwind.
+ */
+:root{
+  --ui:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --num:Bahnschrift,"DIN Alternate","Avenir Next Condensed","Arial Narrow",Arial,sans-serif;
+}
+#display .hidden{display:none!important}
+@media (prefers-reduced-motion:reduce){#display *{transition:none!important;animation:none!important}}
+
+#display{
+  --d-bg:#0c1a4d; --d-text:#f6f4ee; --d-accent:#3f63e0; --d-warn:#e9b949; --d-over:#f08a7a; --d-font:var(--num);
+  position:fixed;inset:0;background:var(--d-bg);color:var(--d-text);font-family:var(--d-font);
+  display:grid;grid-template-rows:auto 1fr auto;padding:3.5vh 4vw;overflow:hidden;
+}
+#display.nocursor{cursor:none}
+/* note to speaker: note takes the stage, timer moves to the side */
+#display.has-msg .d-main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:center;gap:4vw;text-align:left}
+#display.has-msg .d-clockblock{align-items:center;text-align:center}
+#display.has-msg .d-item{font-size:clamp(16px,4.2vh,72px)}
+#display.has-msg .d-person{font-size:clamp(14px,3.2vh,56px)}
+#display.has-msg .d-clockblock .d-time{font-size:min(13.5vw,28vh)}
+#display.has-msg .d-up{font-size:clamp(16px,5vh,84px)}
+#display.has-msg .d-bar{width:100%}
+.d-note{background:var(--d-text);color:var(--d-bg);border-radius:2.6vh;padding:4vh 3.2vw 4.4vh;
+  border-left:1.6vh solid var(--d-warn);animation:noteIn .45s ease-out,notePulse 1.8s ease-out .45s 3}
+.d-note-tag{font-size:clamp(14px,3.8vh,64px);font-weight:600;opacity:.7;margin-bottom:1.6vh}
+.d-note-text{font-size:clamp(24px,9.5vh,170px);font-weight:700;line-height:1.08;overflow-wrap:anywhere}
+@keyframes noteIn{from{opacity:0;transform:translateX(-3vw)}to{opacity:1;transform:none}}
+@keyframes notePulse{0%{box-shadow:0 0 0 0 var(--d-warn)}100%{box-shadow:0 0 0 3vh transparent}}
+.d-top{display:flex;justify-content:space-between;align-items:center;gap:2vw;min-height:7vh}
+.d-brand{display:flex;align-items:center;gap:1.4vw;font-size:clamp(14px,3vh,44px);opacity:.85}
+.d-brand img{height:8vh;max-width:26vw;object-fit:contain}
+.d-clock{font-size:clamp(16px,4.2vh,68px);font-variant-numeric:tabular-nums;opacity:.85}
+.d-main{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:0}
+.d-clockblock{display:flex;flex-direction:column;align-items:center;gap:.8vh;min-width:0}
+.d-up{font-size:clamp(20px,7.5vh,130px);font-weight:700;line-height:1;background:var(--d-over);color:#fff;
+  padding:.18em .7em .22em;border-radius:.35em;margin-top:1.2vh}
+#display.over .d-time{font-size:min(26vw,40vh)}
+.d-item{font-size:clamp(20px,6.5vh,120px);font-weight:600;line-height:1.05;max-width:92vw}
+.d-person{font-size:clamp(16px,4.2vh,72px);opacity:.72}
+.d-time{font-size:min(29vw,46vh);font-weight:700;line-height:.95;font-variant-numeric:tabular-nums;letter-spacing:-.01em;transition:color .8s ease;margin-top:1vh}
+.d-label{font-size:clamp(14px,3.6vh,60px);opacity:.75;transition:color .8s ease}
+.d-bar{width:min(72vw,1500px);height:1.3vh;min-height:6px;border-radius:99px;margin-top:2.4vh;overflow:hidden;
+  background:color-mix(in srgb,var(--d-text) 14%,transparent)}
+.d-bar span{display:block;height:100%;width:0;background:var(--d-accent);border-radius:inherit;transition:background .8s ease}
+#display.warn .d-time,#display.warn .d-label{color:var(--d-warn)}
+#display.warn .d-bar span{background:var(--d-warn)}
+#display.over .d-time,#display.over .d-label{color:var(--d-over)}
+#display.over .d-bar span{background:var(--d-over)}
+.d-bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:3vw;min-height:7vh}
+.d-next{font-size:clamp(18px,5.2vh,88px);display:flex;align-items:center;gap:1.2vw;min-width:0}
+.d-next b{font-weight:700}
+.d-next .who{opacity:.8}
+.d-next-tag{font-size:.6em;font-weight:700;padding:.25em .75em;border-radius:99px;background:var(--d-accent);color:#fff;flex-shrink:0}
+.d-sched{font-size:clamp(14px,3.4vh,56px);padding:.5vh 1.6vw;border-radius:99px;white-space:nowrap;
+  border:2px solid color-mix(in srgb,var(--d-text) 30%,transparent)}
+.d-sched.behind{border-color:var(--d-warn);color:var(--d-warn)}
+.d-sched.ahead{border-color:color-mix(in srgb,var(--d-text) 55%,transparent)}
+.d-hint{position:absolute;right:2vw;bottom:1.5vh;font-family:var(--ui);font-size:13px;opacity:.5;transition:opacity 1s}
+.d-hint.gone{opacity:0}

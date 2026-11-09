@@ -1,6 +1,10 @@
 "use client";
 
+import { MonitorPlay } from "lucide-react";
+import Image from "next/image";
 import { useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { addTime, goTo, toggleRun } from "@/lib/timer/actions";
 import { useTimerStore } from "@/lib/timer/store";
 import { NowPanel } from "./now-panel";
@@ -46,28 +50,35 @@ export function ControlPanel() {
   if (!ready) return null;
 
   return (
-    <div id="control">
-      <div className="c-head">
-        <h1>Service timer</h1>
-        <span className="conn">
-          <i />
-          <span>Local mode</span>
-        </span>
-        <button className="btn primary" onClick={openDisplay}>
-          Open display
-        </button>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <header className="sticky top-0 z-10 border-b bg-white pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 md:px-6">
+          <Image src="/assets/logo/cw-mark.png" alt="Church Workflow" width={32} height={32} priority />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold leading-tight">Service Timer</p>
+            <p className="hidden text-xs text-muted-foreground sm:block">by Church Workflow</p>
+          </div>
+          <Badge variant="outline" shape="pill" className="gap-1.5 font-medium text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-gray-400" aria-hidden />
+            Local mode
+          </Badge>
+          <Button onClick={openDisplay}>
+            <MonitorPlay />
+            <span className="hidden sm:inline">Open display</span>
+          </Button>
+        </div>
+      </header>
 
-      <div className="c-grid">
+      <main className="mx-auto grid max-w-7xl gap-6 p-4 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] md:p-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
         <NowPanel />
-        <div className="right">
+        <div className="flex min-w-0 flex-col gap-6">
           <ProgramPanel />
           <DisplayTogglesPanel />
           <ServiceSettingsPanel />
           <DesignPanel />
           <PhonePanel />
         </div>
-      </div>
+      </main>
     </div>
   );
 }

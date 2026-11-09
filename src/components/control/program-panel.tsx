@@ -1,12 +1,17 @@
 "use client";
 
+import { ArrowDown, ArrowUp, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { inputClass } from "@/components/ui/input";
 import { useNow } from "@/hooks/use-now";
 import { addItem, clearProgram, deleteItem, goTo, moveItem, updateItem } from "@/lib/timer/actions";
 import { uid } from "@/lib/timer/defaults";
 import { useTimerStore } from "@/lib/timer/store";
 import { hhmm, plannedStart, programSummary } from "@/lib/timer/timing";
 import type { ProgramItem } from "@/lib/timer/types";
+import { cn } from "@/lib/utils";
 import { SyncedInput } from "./synced-input";
 import { TemplatesBox } from "./templates-box";
 
@@ -30,10 +35,12 @@ export function ProgramPanel() {
   };
 
   return (
-    <section className="panel">
-      <h2>Program</h2>
-      <p className="p-sum">{programSummary(state, now)}</p>
-      <div id="plist">
+    <Card>
+      <div className="p-6 pb-4">
+        <h2 className="font-semibold leading-tight">Program</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{programSummary(state, now)}</p>
+      </div>
+      <div className="space-y-1 px-3 sm:px-4">
         {state.items.map((it, i) => (
           <ProgramRow
             key={it.id}
@@ -54,16 +61,18 @@ export function ProgramPanel() {
           />
         ))}
       </div>
-      <div className="row" style={{ marginTop: 12 }}>
-        <button className="btn" onClick={onAdd}>
+      <div className="flex flex-wrap gap-2 p-6 pt-4">
+        <Button variant="outline" onClick={onAdd}>
+          <Plus />
           Add item
-        </button>
-        <button className="btn quiet danger" onClick={onClear}>
+        </Button>
+        <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={onClear}>
+          <Trash2 />
           Clear program
-        </button>
+        </Button>
       </div>
       <TemplatesBox />
-    </section>
+    </Card>
   );
 }
 
@@ -81,6 +90,10 @@ interface RowProps {
   onDelete: () => void;
 }
 
+// On phones each row takes two lines (name + minutes, then speaker + actions);
+// from `sm` up it is one line, as in the prototype.
+const reset = "sm:col-start-auto sm:row-start-auto";
+
 function ProgramRow(p: RowProps) {
   const nameRef = useRef<HTMLInputElement>(null);
   const { focusOnMount, onFocused } = p;
@@ -94,13 +107,30 @@ function ProgramRow(p: RowProps) {
   }, [focusOnMount, onFocused]);
 
   return (
-    <div className={`prow${p.current ? " current" : ""}${p.done ? " done" : ""}`}>
-      <button className="pnum" title="Go to this item" onClick={p.onGo}>
+    <div
+      className={cn(
+        "grid items-center gap-2 rounded-lg border border-transparent p-2 transition-colors",
+        "grid-cols-[2.25rem_minmax(0,1fr)_5.5rem]",
+        "sm:grid-cols-[2.25rem_minmax(0,1.6fr)_minmax(0,1.1fr)_5.5rem_2.75rem_auto]",
+        p.current && "border-primary-200 bg-primary-50",
+        p.done && "opacity-60",
+      )}
+    >
+      <button
+        className={cn(
+          "col-start-1 row-span-2 flex h-9 w-9 items-center justify-center self-start rounded-full border text-sm font-semibold tabular-nums transition-colors sm:row-span-1 sm:self-center",
+          p.current
+            ? "border-primary bg-primary text-primary-foreground"
+            : "bg-background hover:border-primary hover:text-primary",
+        )}
+        title="Go to this item"
+        onClick={p.onGo}
+      >
         {p.index + 1}
       </button>
       <SyncedInput
         ref={nameRef}
-        className="pname"
+        className={cn(inputClass, "col-start-2 row-start-1 bg-background", reset)}
         type="text"
         placeholder="Item name"
         aria-label="Item name"
@@ -108,15 +138,16 @@ function ProgramRow(p: RowProps) {
         onValue={(name) => p.onChange({ name })}
       />
       <SyncedInput
-        className="pperson"
+        className={cn(inputClass, "col-start-2 row-start-2 bg-background", reset)}
         type="text"
         placeholder="Speaker or leader"
         aria-label="Speaker"
         value={p.item.person}
         onValue={(person) => p.onChange({ person })}
       />
-      <label className="pmin">
+      <label className={cn("col-start-3 row-start-1 flex items-center gap-1.5 text-xs text-muted-foreground", reset)}>
         <SyncedInput
+          className={cn(inputClass, "bg-background px-2 text-right")}
           type="number"
           min={0}
           max={600}
@@ -125,19 +156,25 @@ function ProgramRow(p: RowProps) {
           value={p.item.minutes}
           onValue={(v) => p.onChange({ minutes: Math.max(0, Number(v) || 0) })}
         />
-        <span>min</span>
+        min
       </label>
-      <span className="ptime">{p.planned}</span>
-      <div className="pact">
-        <button title="Move up" onClick={() => p.onMove(-1)}>
-          ↑
-        </button>
-        <button title="Move down" onClick={() => p.onMove(1)}>
-          ↓
-        </button>
-        <button title="Delete" onClick={p.onDelete}>
-          ✕
-        </button>
+      <span className="hidden text-xs tabular-nums text-muted-foreground sm:block">{p.planned}</span>
+      <div className={cn("col-start-3 row-start-2 flex justify-end", reset)}>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" title="Move up" onClick={() => p.onMove(-1)}>
+          <ArrowUp />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" title="Move down" onClick={() => p.onMove(1)}>
+          <ArrowDown />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+          title="Delete"
+          onClick={p.onDelete}
+        >
+          <X />
+        </Button>
       </div>
     </div>
   );

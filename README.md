@@ -31,8 +31,10 @@ npm run lint
 | `src/lib/timer/store.ts` | The local-first store. `dispatch()` applies an action, saves it on this device and broadcasts it to the display window over `BroadcastChannel`, which needs no network. |
 | `src/lib/timer/clock.ts` | The shared clock, corrected by the server's time once sync arrives. |
 | `src/components/display` | The display screen. |
-| `src/components/control` | The control panel. |
-| `src/styles/timer.css` | The prototype's stylesheet, ported unchanged so the screens match what has run in live services. |
+| `src/components/control` | The control panel, in the Church Workflow style (Tailwind). |
+| `src/components/ui` | Button, Card, Badge and Switch copied from `church-workflow-fe-app`, plus Input/Select with the same look. |
+| `src/app/globals.css`, `tailwind.config.ts` | Theme tokens copied from `church-workflow-fe-app`. Keep them in step with that app. |
+| `src/styles/display.css` | The display screen's stylesheet, ported unchanged from the prototype. The display follows each church's own colours, logo and font, not the Church Workflow theme. |
 
 Rules from live use that the code keeps (handoff, section 6):
 
