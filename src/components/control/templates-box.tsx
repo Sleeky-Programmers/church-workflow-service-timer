@@ -1,6 +1,9 @@
 "use client";
 
+import { Save } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/input";
 import { deleteTemplate, loadTemplate, saveTemplate } from "@/lib/timer/actions";
 import { uid } from "@/lib/timer/defaults";
 import { useTimerStore } from "@/lib/timer/store";
@@ -48,10 +51,15 @@ export function TemplatesBox() {
   };
 
   return (
-    <div className="tpl">
-      <h3>Service templates</h3>
-      <div className="row">
-        <select aria-label="Saved templates" value={selectedId} onChange={(e) => setPicked(e.target.value)}>
+    <div className="border-t p-6">
+      <h3 className="text-sm font-semibold">Service templates</h3>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <Select
+          aria-label="Saved templates"
+          className="sm:flex-1"
+          value={selectedId}
+          onChange={(e) => setPicked(e.target.value)}
+        >
           {templates.length ? (
             templates.map((t) => (
               <option key={t.id} value={t.id}>
@@ -61,25 +69,33 @@ export function TemplatesBox() {
           ) : (
             <option value="">No templates saved yet</option>
           )}
-        </select>
-        <button className="btn" onClick={onLoad}>
-          Load
-        </button>
-        <button className="btn quiet danger" onClick={onDelete}>
-          Delete
-        </button>
+        </Select>
+        <div className="flex gap-2">
+          <Button variant="outline" className="h-10 flex-1 sm:flex-none" onClick={onLoad} disabled={!selected}>
+            Load
+          </Button>
+          <Button
+            variant="ghost"
+            className="h-10 flex-1 text-destructive hover:text-destructive sm:flex-none"
+            onClick={onDelete}
+            disabled={!selected}
+          >
+            Delete
+          </Button>
+        </div>
       </div>
-      <div className="row">
-        <input
-          type="text"
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+        <Input
+          className="sm:flex-1"
           maxLength={60}
           placeholder="Template name, e.g. Midweek service"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <button className="btn" onClick={onSave}>
+        <Button className="h-10" onClick={onSave}>
+          <Save />
           Save current program
-        </button>
+        </Button>
       </div>
     </div>
   );
