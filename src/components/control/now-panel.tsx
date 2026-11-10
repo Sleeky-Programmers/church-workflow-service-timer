@@ -18,6 +18,7 @@ export function NowPanel() {
   const state = useTimerStore((s) => s.state)!;
   const dispatch = useTimerStore((s) => s.dispatch);
   const now = useNow();
+  const canControl = useTimerStore((s) => s.access.canControl);
   const [msgText, setMsgText] = useState("");
 
   const it = currentItem(state);
@@ -39,7 +40,7 @@ export function NowPanel() {
 
   return (
     <Card className="lg:sticky lg:top-24" aria-label="Current item">
-      <div className="p-6">
+      <fieldset disabled={!canControl} className="min-w-0 p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Now</p>
@@ -167,7 +168,7 @@ export function NowPanel() {
             Shortcuts: Space start/pause · N next · P previous · + / {MINUS} one minute
           </p>
         ) : null}
-      </div>
+      </fieldset>
     </Card>
   );
 }

@@ -1,25 +1,68 @@
 "use client";
 
-import { MonitorPlay } from "lucide-react";
+import { LogIn, LogOut, MonitorPlay } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { storageKeys } from "@/lib/auth/session";
 import { addTime, goTo, toggleRun } from "@/lib/timer/actions";
-import { useTimerStore } from "@/lib/timer/store";
+import { emptyState } from "@/lib/timer/remote";
+import { LOCAL_KEY, useTimerStore } from "@/lib/timer/store";
+import { startSync } from "@/lib/timer/sync";
+import { ConnectionBadge } from "./connection-badge";
 import { NowPanel } from "./now-panel";
 import { ProgramPanel } from "./program-panel";
-import { DesignPanel, DisplayTogglesPanel, PhonePanel, ServiceSettingsPanel } from "./settings-panels";
+import { DesignPanel, DisplayTogglesPanel, ServiceSettingsPanel } from "./settings-panels";
+import { SharingPanel } from "./sharing-panel";
 
 const DISPLAY_WINDOW = "serviceTimerDisplay";
 
-export function ControlPanel() {
+export type ControlMode =
+  | { kind: "local" }
+  | { kind: "admin"; userName: string; onSignOut: () => void; onSignedOut: () => void }
+  | { kind: "operator"; displayToken: string; operatorToken: string; onDenied: (message: string) => void };
+
+function storageKeyFor(mode: ControlMode) {
+  if (mode.kind === "local") return LOCAL_KEY;
+  if (mode.kind === "admin") return storageKeys.online;
+  return storageKeys.operator(mode.displayToken);
+}
+
+export function ControlPanel({ mode }: { mode: ControlMode }) {
   const ready = useTimerStore((s) => s.state !== null);
   const shortcuts = useTimerStore((s) => !!s.state?.settings.shortcuts);
+  const conn = useTimerStore((s) => s.conn);
+  const unsynced = useTimerStore((s) => s.unsynced);
   const init = useTimerStore((s) => s.init);
   const dispatch = useTimerStore((s) => s.dispatch);
 
-  useEffect(() => init("control"), [init]);
+  // Mode changes only when the page changes, so the key is enough to restart.
+  const key = storageKeyFor(mode);
+  const operatorToken = mode.kind === "operator" ? mode.operatorToken : "";
+  useEffect(() => {
+    const stopStore = init("control", {
+      storageKey: key,
+      channel: true,
+      fresh: mode.kind === "local" ? undefined : emptyState,
+    });
+    if (mode.kind === "local") return stopStore;
+    const stopSync = startSync(
+      mode.kind === "admin"
+        ? { kind: "admin" }
+        : { kind: "operator", displayToken: mode.displayToken, operatorToken: mode.operatorToken },
+      {
+        pendingKey: storageKeys.pending(key),
+        onDenied: mode.kind === "operator" ? mode.onDenied : undefined,
+        onSignedOut: mode.kind === "admin" ? mode.onSignedOut : undefined,
+      },
+    );
+    return () => {
+      stopSync();
+      stopStore();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restart only when the device's identity changes
+  }, [init, key, operatorToken]);
 
   // Shortcuts are off by default and never act while any field has focus:
   // in live use, typing a note once fired "−" and jumped items.
@@ -56,18 +99,44 @@ export function ControlPanel() {
           <Image src="/assets/logo/cw-mark.png" alt="Church Workflow" width={32} height={32} priority />
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold leading-tight">Service Timer</p>
-            <p className="hidden text-xs text-muted-foreground sm:block">by Church Workflow</p>
+            <p className="hidden truncate text-xs text-muted-foreground sm:block">
+              {mode.kind === "admin"
+                ? mode.userName
+                : mode.kind === "operator"
+                  ? "Operator (PIN)"
+                  : "by Church Workflow"}
+            </p>
           </div>
-          <Badge variant="outline" shape="pill" className="gap-1.5 font-medium text-muted-foreground">
-            <span className="h-2 w-2 rounded-full bg-gray-400" aria-hidden />
-            Local mode
-          </Badge>
-          <Button onClick={openDisplay}>
-            <MonitorPlay />
-            <span className="hidden sm:inline">Open display</span>
-          </Button>
+          <ConnectionBadge />
+          {mode.kind !== "operator" ? (
+            <Button onClick={openDisplay}>
+              <MonitorPlay />
+              <span className="hidden sm:inline">Open display</span>
+            </Button>
+          ) : null}
+          {mode.kind === "admin" ? (
+            <Button variant="ghost" size="icon" title="Sign out" aria-label="Sign out" onClick={mode.onSignOut}>
+              <LogOut />
+            </Button>
+          ) : null}
+          {mode.kind === "local" ? (
+            <Button variant="outline" asChild>
+              <Link href="/login">
+                <LogIn />
+                <span className="hidden sm:inline">Sign in</span>
+              </Link>
+            </Button>
+          ) : null}
         </div>
       </header>
+
+      {conn === "offline" ? (
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-800" role="status">
+          {unsynced
+            ? "Not connected. The timer keeps running here, and your changes will be sent when the connection returns. Templates can only be saved while connected."
+            : "Not connected. The timer keeps running here and will catch up when the connection returns."}
+        </div>
+      ) : null}
 
       <main className="mx-auto grid max-w-7xl gap-6 p-4 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] md:p-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
         <NowPanel />
@@ -76,7 +145,7 @@ export function ControlPanel() {
           <DisplayTogglesPanel />
           <ServiceSettingsPanel />
           <DesignPanel />
-          <PhonePanel />
+          <SharingPanel mode={mode.kind} />
         </div>
       </main>
     </div>
