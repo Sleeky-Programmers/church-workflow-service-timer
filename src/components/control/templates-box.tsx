@@ -1,6 +1,6 @@
 "use client";
 
-import { Save } from "lucide-react";
+import { Save, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { timerApi } from "@/lib/api/endpoints";
 import { deleteTemplate, loadTemplate, saveTemplate } from "@/lib/timer/actions";
 import { uid } from "@/lib/timer/defaults";
 import { useTimerStore } from "@/lib/timer/store";
+import { ImportDialog } from "./import-dialog";
 
 const OFFLINE =
   "Not connected, so templates can't be saved or deleted right now. Wait until the badge at the top says Live, then try again.";
@@ -29,6 +30,7 @@ export function TemplatesBox() {
   const [picked, setPicked] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const templates = state.templates;
   // Keep the chosen template selected even when the list changes underneath.
@@ -104,7 +106,16 @@ export function TemplatesBox() {
 
   return (
     <div className="border-t p-6">
-      <h3 className="text-sm font-semibold">Service templates</h3>
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold">Service templates</h3>
+        {onlineMode && canEdit ? (
+          <Button variant="outline" size="sm" onClick={() => setImporting(true)}>
+            <Sparkles />
+            Import program
+          </Button>
+        ) : null}
+      </div>
+      {importing ? <ImportDialog onClose={() => setImporting(false)} /> : null}
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <Select
           aria-label="Saved templates"

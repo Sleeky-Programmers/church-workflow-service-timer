@@ -34,6 +34,15 @@ The API side lives in `churchWorkflow-api` (`src/modules/service-timer`, with it
 - An expired sign-in while offline doesn't end the session: the token is refreshed and the timer reconnects once the network is back.
 - Changes made offline are kept (even across a reload) and sent when the connection returns; a device with unsent changes sends them instead of taking the server's copy.
 - Templates are saved over REST and only while connected.
+
+## Smart import
+
+**Import program** (next to Service templates, for signed-in operators and admins) reads an order of service from a PDF, a Word document (.docx), a photo or pasted text, using one Claude request on the API (`churchWorkflow-api`, `src/modules/service-timer/import`).
+
+- Photos are scaled to at most 2000px JPEG in the browser first (`src/lib/import/prepare-upload.ts`), which also converts iPhone HEIC photos where the browser can open them.
+- The review screen highlights items whose time or name was estimated or hard to read; editing an item clears its highlight.
+- Nothing is saved until the church chooses **Save as template** and/or **Load into program**.
+- The dialog shows the monthly allowance; over the limit, the server answers `IMPORT_LIMIT_REACHED`.
 - The badge at the top shows Local mode, Connecting, Live, Syncing or Offline.
 - Viewers see the controls disabled; PIN operators can run the timer but not change the display's design.
 
@@ -77,6 +86,6 @@ Built as a standalone Next.js server (`output: "standalone"`) with the `Dockerfi
 - **Phase 0 (done):** prototype parity, running locally on one laptop with the display window.
 - **Phase 1 (done):** sign-up and sign-in with Church Workflow accounts, settings and templates in the API, live phone control over Socket.IO, display links, operator PIN, roles.
 - **Phase 2:** offline-first (service worker, sync on reconnect, status indicators).
-- **Phase 3:** smart import from PDF, Word or photo.
+- **Phase 3 (done):** smart import from PDF, Word or photo.
 - **Phase 4:** plans and billing in naira.
 - **Phase 5:** programs from Church Workflow.

@@ -137,6 +137,22 @@ export const loadTemplate =
     s.message.shown = false;
   };
 
+/** Replaces the program with new items (e.g. from smart import), like loading a template. */
+export const replaceProgram =
+  (items: { name: string; person: string; minutes: number }[], serviceStart?: string): Recipe =>
+  (s) => {
+    s.items = items.map((i) => ({
+      id: uid(),
+      name: i.name,
+      person: i.person || "",
+      minutes: Math.max(0, Number(i.minutes) || 0),
+    }));
+    if (serviceStart) s.settings.serviceStart = serviceStart;
+    s.index = 0;
+    s.timer = freshTimer();
+    s.message.shown = false;
+  };
+
 export const deleteTemplate =
   (templateId: string): Recipe =>
   (s) => {

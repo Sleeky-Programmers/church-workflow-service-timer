@@ -18,6 +18,8 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
+    /** The server's machine-readable reason, e.g. IMPORT_LIMIT_REACHED. */
+    public code?: string,
   ) {
     super(message);
   }
@@ -103,15 +105,17 @@ export async function freshAccessToken(): Promise<string> {
 
 async function errorFrom(res: Response): Promise<ApiError> {
   let message = `Something went wrong (${res.status}).`;
+  let code: string | undefined;
   try {
     const body = await res.json();
     const m = body?.message;
     if (Array.isArray(m)) message = m.join(", ");
     else if (typeof m === "string") message = m;
+    if (typeof body?.code === "string") code = body.code;
   } catch {
     // Not JSON: keep the generic message.
   }
-  return new ApiError(res.status, message);
+  return new ApiError(res.status, message, code);
 }
 
 type Options = Omit<RequestInit, "body"> & { body?: unknown; auth?: boolean };
