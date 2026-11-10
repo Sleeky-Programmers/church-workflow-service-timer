@@ -2,23 +2,45 @@
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { useNow } from "@/hooks/use-now";
+import { storageKeys } from "@/lib/auth/session";
 import { FONTS } from "@/lib/timer/defaults";
-import { useTimerStore } from "@/lib/timer/store";
+import { emptyState } from "@/lib/timer/remote";
+import { DISPLAY_KEY, useTimerStore } from "@/lib/timer/store";
+import { startSync } from "@/lib/timer/sync";
 import { computeView, currentItem, hhmm } from "@/lib/timer/timing";
+
+/**
+ * Where the display gets the timer from:
+ * - local: the control laptop's window, over BroadcastChannel (no network)
+ * - link: a display link, over the internet (no login)
+ */
+export type DisplaySource = { kind: "local" } | { kind: "link"; displayToken: string };
 
 /**
  * What the speaker and congregation see. It keeps no timer of its own:
  * it redraws from the shared state about five times a second.
  */
-export function DisplayScreen() {
+export function DisplayScreen({ source }: { source: DisplaySource }) {
   const state = useTimerStore((s) => s.state);
+  const denied = useTimerStore((s) => s.denied);
+  const conn = useTimerStore((s) => s.conn);
   const init = useTimerStore((s) => s.init);
   const now = useNow();
   const rootRef = useRef<HTMLDivElement>(null);
   const [cursorHidden, setCursorHidden] = useState(false);
   const [hintGone, setHintGone] = useState(false);
 
-  useEffect(() => init("display"), [init]);
+  const token = source.kind === "link" ? source.displayToken : "";
+  useEffect(() => {
+    if (!token) return init("display", { storageKey: DISPLAY_KEY, channel: true });
+    const key = storageKeys.screen(token);
+    const stopStore = init("display", { storageKey: key, fresh: emptyState });
+    const stopSync = startSync({ kind: "display", displayToken: token }, { pendingKey: storageKeys.pending(key) });
+    return () => {
+      stopSync();
+      stopStore();
+    };
+  }, [init, token]);
 
   // Full screen with F or double-click.
   const toggleFullscreen = useCallback(() => {
@@ -57,6 +79,17 @@ export function DisplayScreen() {
   useEffect(() => {
     if (bg) document.body.style.background = bg;
   }, [bg]);
+
+  if (denied && source.kind === "link") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-6 text-center">
+        <div className="max-w-md">
+          <p className="text-lg font-semibold">This display can&apos;t show the timer</p>
+          <p className="mt-2 text-sm text-muted-foreground">{denied}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!state) return null;
 
@@ -131,7 +164,12 @@ export function DisplayScreen() {
         <div className={`d-sched ${v.schedClass}${!sh.schedule || !v.sched ? " hidden" : ""}`}>{v.sched}</div>
       </footer>
 
-      <div className={`d-hint${hintGone ? " gone" : ""}`}>Press F or double-click for full screen</div>
+      {source.kind === "link" && conn !== "online" ? (
+        // The timer keeps counting from its last update; this only says it may be stale.
+        <div className="d-hint">Reconnecting…</div>
+      ) : (
+        <div className={`d-hint${hintGone ? " gone" : ""}`}>Press F or double-click for full screen</div>
+      )}
     </div>
   );
 }

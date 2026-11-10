@@ -7,15 +7,33 @@ Read **Service Timer — Product Plan** and **Service Timer — Developer Handof
 ## Running it
 
 ```bash
+cp .env.sample .env.local   # set NEXT_PUBLIC_API_URL
 npm install
 npm run dev        # http://localhost:3000
-npm test           # timing rules and actions
+npm test           # timing rules, actions and API mapping
 npm run typecheck
 npm run lint
 ```
 
-- `/control` is the control panel (laptop, and later phones).
-- `/display` is the display screen. Open it with **Open display** and drag the window to the extended screen. Press F or double-click for full screen.
+The API side lives in `churchWorkflow-api` (`src/modules/service-timer`, with its own README).
+
+## Pages
+
+| Page | Who | What |
+|---|---|---|
+| `/login`, `/signup`, `/verify`, `/setup` | church admins | Church Workflow accounts. Sign-up creates the church as a Service Timer church. "Use on this computer only" skips the account. |
+| `/control` | signed in, or local mode | The control panel. Signed in, it syncs live with every phone and display. |
+| `/display` | the control laptop | The extended-screen window, fed by the laptop over `BroadcastChannel`. Works with no internet. Press F or double-click for full screen. |
+| `/d/<link>` | any screen | A display link. No login. |
+| `/c/<link>` | volunteers' phones | The operator PIN unlocks control for 12 hours. |
+
+## Online and offline
+
+- Every change saves on the device first, then goes to the server. The laptop and its display window keep running with no internet.
+- Changes made offline are kept (even across a reload) and sent when the connection returns; a device with unsent changes sends them instead of taking the server's copy.
+- Templates are saved over REST and only while connected.
+- The badge at the top shows Local mode, Connecting, Live, Syncing or Offline.
+- Viewers see the controls disabled; PIN operators can run the timer but not change the display's design.
 
 ## Branches
 
@@ -29,7 +47,10 @@ npm run lint
 | `src/lib/timer/timing.ts` | The timing rules from section 5 of the handoff, as pure functions. Change them only with tests. |
 | `src/lib/timer/actions.ts` | Every change to the timer (start, next, +1 min, templates …) as a pure function on a draft state. |
 | `src/lib/timer/store.ts` | The local-first store. `dispatch()` applies an action, saves it on this device and broadcasts it to the display window over `BroadcastChannel`, which needs no network. |
-| `src/lib/timer/clock.ts` | The shared clock, corrected by the server's time once sync arrives. |
+| `src/lib/timer/clock.ts` | The shared clock, corrected by the server's time on every message. |
+| `src/lib/timer/sync.ts` | Live sync over Socket.IO: sends local changes, applies other devices' changes, keeps unsent changes across reloads. |
+| `src/lib/timer/remote.ts` | Maps the screens' one state object to the API's settings, templates and live session. |
+| `src/lib/api` | The API client (same tokens and refresh as Church Workflow) and its endpoints. |
 | `src/components/display` | The display screen. |
 | `src/components/control` | The control panel, in the Church Workflow style (Tailwind). |
 | `src/components/ui` | Button, Card, Badge and Switch copied from `church-workflow-fe-app`, plus Input/Select with the same look. |
@@ -51,8 +72,8 @@ Built as a standalone Next.js server (`output: "standalone"`) with the `Dockerfi
 
 ## Roadmap
 
-- **Phase 0:** prototype parity, running locally on one laptop with the display window.
-- **Phase 1:** sign-up and sign-in with Church Workflow accounts, settings and templates in the API, live phone control over Socket.IO, display links, operator PIN, roles.
+- **Phase 0 (done):** prototype parity, running locally on one laptop with the display window.
+- **Phase 1 (done):** sign-up and sign-in with Church Workflow accounts, settings and templates in the API, live phone control over Socket.IO, display links, operator PIN, roles.
 - **Phase 2:** offline-first (service worker, sync on reconnect, status indicators).
 - **Phase 3:** smart import from PDF, Word or photo.
 - **Phase 4:** plans and billing in naira.

@@ -22,6 +22,7 @@ export function ProgramPanel() {
   // Planned times only change with the program, so a slow tick is enough.
   const now = useNow(30_000);
   const [focusId, setFocusId] = useState<string | null>(null);
+  const canControl = useTimerStore((s) => s.access.canControl);
 
   const onAdd = () => {
     const id = uid();
@@ -40,6 +41,7 @@ export function ProgramPanel() {
         <h2 className="font-semibold leading-tight">Program</h2>
         <p className="mt-1 text-sm text-muted-foreground">{programSummary(state, now)}</p>
       </div>
+      <fieldset disabled={!canControl} className="min-w-0">
       <div className="space-y-1 px-3 sm:px-4">
         {state.items.map((it, i) => (
           <ProgramRow
@@ -71,6 +73,7 @@ export function ProgramPanel() {
           Clear program
         </Button>
       </div>
+      </fieldset>
       <TemplatesBox />
     </Card>
   );
@@ -133,6 +136,7 @@ function ProgramRow(p: RowProps) {
         className={cn(inputClass, "col-start-2 row-start-1 bg-background", reset)}
         type="text"
         placeholder="Item name"
+        maxLength={120}
         aria-label="Item name"
         value={p.item.name}
         onValue={(name) => p.onChange({ name })}
@@ -141,6 +145,7 @@ function ProgramRow(p: RowProps) {
         className={cn(inputClass, "col-start-2 row-start-2 bg-background", reset)}
         type="text"
         placeholder="Speaker or leader"
+        maxLength={80}
         aria-label="Speaker"
         value={p.item.person}
         onValue={(person) => p.onChange({ person })}

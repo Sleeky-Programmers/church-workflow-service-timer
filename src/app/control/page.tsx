@@ -1,5 +1,5 @@
-import { ControlPanel } from "@/components/control/control-panel";
+import { ControlGate } from "@/components/control/control-gate";
 
 export default function ControlPage() {
-  return <ControlPanel />;
+  return <ControlGate />;
 }
