@@ -38,6 +38,66 @@ export const authApi = {
     }),
 };
 
+// ----------------------------------------------------------------------- team
+
+export type TimerRole = "admin" | "operator" | "viewer";
+
+export const TIMER_ROLE_INFO: Record<TimerRole, { name: string; does: string }> = {
+  admin: { name: "Timer Admin", does: "Runs the timer, changes the design, and manages the PIN, links and team." },
+  operator: { name: "Timer Operator", does: "Runs the timer and edits programs and templates." },
+  viewer: { name: "Timer Viewer", does: "Can watch the timer but not change it." },
+};
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  roleName: string;
+  /** Null when their access is managed in Church Workflow. */
+  timerRole: TimerRole | null;
+  isYou: boolean;
+  isOwner: boolean;
+  suspended: boolean;
+  manageable: boolean;
+}
+
+export interface TeamInvite {
+  id: string;
+  email: string;
+  name: string;
+  roleName: string;
+  timerRole: TimerRole | null;
+  sentAt: string | null;
+}
+
+export interface Team {
+  members: TeamMember[];
+  invites: TeamInvite[];
+  seats: { used: number; limit: number };
+}
+
+export const teamApi = {
+  list: () => api<Team>("/service-timer/team"),
+  invite: (body: { email: string; firstName?: string; lastName?: string; role: TimerRole }) =>
+    api<{ id: string }>("/service-timer/team/invites", { method: "POST", body }),
+  resend: (id: string) => api<{ resent: boolean }>(`/service-timer/team/invites/${id}/resend`, { method: "POST" }),
+  cancel: (id: string) => api<{ cancelled: boolean }>(`/service-timer/team/invites/${id}`, { method: "DELETE" }),
+  changeRole: (id: string, role: TimerRole) =>
+    api<{ id: string }>(`/service-timer/team/members/${id}/role`, { method: "PUT", body: { role } }),
+  remove: (id: string) => api<{ removed: boolean }>(`/service-timer/team/members/${id}`, { method: "DELETE" }),
+};
+
+/** Accepting an emailed invite (the same endpoints Church Workflow uses). */
+export const inviteApi = {
+  preview: (token: string) =>
+    api<{ email: string; firstName?: string; lastName?: string }>(
+      `/auth/preview?token=${encodeURIComponent(token)}`,
+      { auth: false },
+    ),
+  accept: (token: string, body: { firstName: string; lastName: string; password: string }) =>
+    api<Tokens>(`/auth/admin-register?token=${encodeURIComponent(token)}`, { method: "POST", body, auth: false }),
+};
+
 // -------------------------------------------------------------- smart import
 
 export interface ImportUsage {
