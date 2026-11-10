@@ -38,6 +38,42 @@ export const authApi = {
     }),
 };
 
+// -------------------------------------------------------------- smart import
+
+export interface ImportUsage {
+  used: number;
+  limit: number;
+  resetsOn: string;
+}
+
+export interface ImportedItem {
+  name: string;
+  person: string;
+  minutes: number;
+  /** False when the minutes or name were estimated or hard to read. */
+  confident: boolean;
+}
+
+export interface ImportResult {
+  serviceName: string;
+  serviceStart: string;
+  items: ImportedItem[];
+  usage: ImportUsage;
+}
+
+export const importApi = {
+  usage: () => api<ImportUsage>("/service-timer/imports/usage"),
+  /** One upload (PDF, .docx or photo) or pasted text; nothing is saved. */
+  extract: (input: { file: Blob; fileName: string } | { text: string }) => {
+    if ("text" in input) {
+      return api<ImportResult>("/service-timer/imports", { method: "POST", body: { text: input.text } });
+    }
+    const form = new FormData();
+    form.append("file", input.file, input.fileName);
+    return api<ImportResult>("/service-timer/imports", { method: "POST", body: form });
+  },
+};
+
 // --------------------------------------------------------------------- timer
 
 export type SettingsPatch = Partial<
