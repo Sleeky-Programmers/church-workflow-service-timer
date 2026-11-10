@@ -28,6 +28,7 @@ The API side lives in `churchWorkflow-api` (`src/modules/service-timer`, with it
 | `/c/<link>` | volunteers' phones | The operator PIN unlocks control for 12 hours. |
 | `/team` | timer admins | Invite people as Timer Admin, Operator or Viewer; resend or cancel invites; change roles; remove people. Members with a Church Workflow role are shown but managed there. |
 | `/accept-invite?invite=…` | invited people | The link in the invite email: set a password and land in the timer for the inviter's branch. |
+| `/billing` | timer admins | The plan: Free or Church (Paystack, a month or a year at a time), usage, and payments. Church Workflow churches have the timer included. |
 
 ## Online and offline
 

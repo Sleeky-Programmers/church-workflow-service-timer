@@ -172,6 +172,16 @@ export function TeamPage() {
                 {full ? (
                   <p className="text-sm text-muted-foreground">
                     All seats are in use. Remove someone or cancel an invite to add another person.
+                    {team.plan === "FREE" ? (
+                      <>
+                        {" "}
+                        Or{" "}
+                        <Link href="/billing" className="font-medium text-primary hover:underline">
+                          upgrade to the Church plan
+                        </Link>{" "}
+                        for more seats.
+                      </>
+                    ) : null}
                   </p>
                 ) : null}
               </form>

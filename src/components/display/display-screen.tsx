@@ -170,6 +170,7 @@ export function DisplayScreen({ source }: { source: DisplaySource }) {
       ) : (
         <div className={`d-hint${hintGone ? " gone" : ""}`}>Press F or double-click for full screen</div>
       )}
+      {st.showMark ? <div className="d-mark">Service Timer</div> : null}
     </div>
   );
 }

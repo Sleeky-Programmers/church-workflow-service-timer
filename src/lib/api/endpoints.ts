@@ -74,6 +74,7 @@ export interface Team {
   members: TeamMember[];
   invites: TeamInvite[];
   seats: { used: number; limit: number };
+  plan?: "FREE" | "CHURCH" | "CHURCH_WORKFLOW";
 }
 
 export const teamApi = {
@@ -96,6 +97,47 @@ export const inviteApi = {
     ),
   accept: (token: string, body: { firstName: string; lastName: string; password: string }) =>
     api<Tokens>(`/auth/admin-register?token=${encodeURIComponent(token)}`, { method: "POST", body, auth: false }),
+};
+
+// --------------------------------------------------------------------- billing
+
+export interface BillingOverview {
+  plan: {
+    key: "FREE" | "CHURCH" | "CHURCH_WORKFLOW";
+    name: string;
+    userLimit: number | null;
+    importLimit: number;
+    customBranding: boolean;
+    periodEnd: string | null;
+  };
+  plans: {
+    free: { name: string; users: number; imports: number; customBranding: boolean };
+    church: {
+      name: string;
+      monthlyPrice: number;
+      yearlyPrice: number;
+      users: number;
+      imports: number;
+      customBranding: boolean;
+    };
+  };
+  usage: { seats: number; imports: number };
+  canPay: boolean;
+  payments: { reference: string; amount: number; cycle: "monthly" | "yearly"; paidAt: string }[];
+}
+
+export const billingApi = {
+  overview: () => api<BillingOverview>("/service-timer/billing"),
+  checkout: (cycle: "monthly" | "yearly") =>
+    api<{ reference: string; authorizationUrl: string }>("/service-timer/billing/checkout", {
+      method: "POST",
+      body: { cycle },
+    }),
+  confirm: (reference: string) =>
+    api<{ status: "pending" | "success" | "failed" }>("/service-timer/billing/confirm", {
+      method: "POST",
+      body: { reference },
+    }),
 };
 
 // -------------------------------------------------------------- smart import

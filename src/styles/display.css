@@ -62,3 +62,5 @@
 .d-sched.ahead{border-color:color-mix(in srgb,var(--d-text) 55%,transparent)}
 .d-hint{position:absolute;right:2vw;bottom:1.5vh;font-family:var(--ui);font-size:13px;opacity:.5;transition:opacity 1s}
 .d-hint.gone{opacity:0}
+/* Free plan: a small "Service Timer" mark (Product Plan, section 7) */
+.d-mark{position:absolute;left:4vw;bottom:.8vh;font-family:var(--ui);font-size:clamp(10px,1.5vh,18px);letter-spacing:.02em;opacity:.45}
