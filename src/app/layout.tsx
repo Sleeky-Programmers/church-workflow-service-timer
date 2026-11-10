@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { ServiceWorker } from "@/components/pwa/service-worker";
 import "./globals.css";
 import "../styles/display.css";
 
@@ -29,7 +30,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${inter.className} antialiased`}>{children}</body>
+      <body className={`${inter.variable} ${inter.className} antialiased`}>
+        {children}
+        <ServiceWorker />
+      </body>
     </html>
   );
 }

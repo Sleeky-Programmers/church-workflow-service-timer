@@ -8,6 +8,16 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // The service worker is plain JS that runs in the browser's worker scope.
+    files: ["public/sw.js"],
+    languageOptions: {
+      sourceType: "script",
+      globals: Object.fromEntries(
+        ["self", "caches", "fetch", "Request", "Response", "URL", "setTimeout"].map((g) => [g, "readonly"]),
+      ),
+    },
+  },
+  {
     plugins: { "@next/next": nextPlugin, "react-hooks": reactHooks },
     rules: {
       ...nextPlugin.configs["core-web-vitals"].rules,

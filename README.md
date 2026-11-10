@@ -30,6 +30,8 @@ The API side lives in `churchWorkflow-api` (`src/modules/service-timer`, with it
 ## Online and offline
 
 - Every change saves on the device first, then goes to the server. The laptop and its display window keep running with no internet.
+- A service worker (`public/sw.js`, production builds only) saves the pages and their files, so the timer can be reloaded or reopened with no internet, including a display window never opened before. Pages are network-first with a 3-second fallback to the saved copy; the API and live sync are never cached. Bump `VERSION` in `sw.js` to clear old caches.
+- An expired sign-in while offline doesn't end the session: the token is refreshed and the timer reconnects once the network is back.
 - Changes made offline are kept (even across a reload) and sent when the connection returns; a device with unsent changes sends them instead of taking the server's copy.
 - Templates are saved over REST and only while connected.
 - The badge at the top shows Local mode, Connecting, Live, Syncing or Offline.

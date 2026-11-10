@@ -13,7 +13,7 @@
  * - Settings and templates go over REST. Templates are only saved online.
  */
 import { io, type Socket } from "socket.io-client";
-import { apiOrigin, ApiError, freshAccessToken } from "@/lib/api/client";
+import { apiOrigin, ApiError, freshAccessToken, tokens } from "@/lib/api/client";
 import { timerApi } from "@/lib/api/endpoints";
 import { syncToServer } from "./clock";
 import {
@@ -113,11 +113,13 @@ export function startSync(auth: SyncAuth, opts: SyncOptions): () => void {
       freshAccessToken()
         .then((token) => cb({ token }))
         .catch((err) => {
-          // Offline: let Socket.IO keep retrying. Signed out: stop.
+          // Signed out: stop. Can't refresh right now (offline): try with
+          // the token we have; if the server says it expired, recoverSession
+          // refreshes and reconnects once the network is back.
           if (err instanceof ApiError && err.status === 401) {
             stop();
             opts.onSignedOut?.();
-          } else cb({});
+          } else cb({ token: tokens.access() ?? undefined });
         });
     },
   });
@@ -251,7 +253,32 @@ export function startSync(auth: SyncAuth, opts: SyncOptions): () => void {
     if (auth.kind !== "display") store.getState().replace(applyTemplates(state(), templates));
   });
 
+  // An expired sign-in is not a reason to give up mid-service: refresh the
+  // token and reconnect, retrying while the network is down. Only a refused
+  // refresh (signed out elsewhere, account removed) ends the session.
+  let recovering = false;
+  async function recoverSession() {
+    if (stopped) return;
+    recovering = true;
+    store.getState().setMeta({ conn: "offline" });
+    try {
+      await freshAccessToken();
+      recovering = false;
+      if (!stopped) socket.connect();
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        recovering = false;
+        stop();
+        opts.onSignedOut?.();
+      } else setTimeout(recoverSession, RETRY_MS);
+    }
+  }
+
   socket.on("denied", ({ message }: { message: string }) => {
+    if (auth.kind === "admin" && /expired/i.test(message)) {
+      void recoverSession();
+      return;
+    }
     denied = true;
     store.getState().setMeta({ conn: "denied", denied: message });
     opts.onDenied?.(message);
@@ -262,7 +289,7 @@ export function startSync(auth: SyncAuth, opts: SyncOptions): () => void {
     if (!denied) store.getState().setMeta({ conn: "offline" });
     // The server ends guest connections when the PIN or links change:
     // reconnect, and it will either welcome us back or say why not.
-    if (reason === "io server disconnect" && !denied) setTimeout(() => socket.connect(), 500);
+    if (reason === "io server disconnect" && !denied && !recovering) setTimeout(() => socket.connect(), 500);
   });
 
   socket.on("connect_error", () => {
