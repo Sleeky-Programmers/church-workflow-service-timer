@@ -31,6 +31,7 @@ export interface ServerSettings {
   hasOwnLogo: boolean;
   hasPin: boolean;
   displayToken?: string;
+  plan?: { key: string; name: string; customBranding: boolean; showMark: boolean };
 }
 
 export interface ServerSession {
@@ -72,6 +73,8 @@ export function applySettings(state: TimerState, s: ServerSettings): TimerState 
       colors: { ...state.settings.colors, ...s.colors },
       show: { ...state.settings.show, ...s.show },
       logo: s.logoUrl || "",
+      showMark: s.plan?.showMark ?? false,
+      customBranding: s.plan?.customBranding ?? true,
     },
   };
 }

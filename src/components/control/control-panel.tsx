@@ -1,6 +1,6 @@
 "use client";
 
-import { LogIn, LogOut, MonitorPlay, Users } from "lucide-react";
+import { CreditCard, LogIn, LogOut, MonitorPlay, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
@@ -116,12 +116,20 @@ export function ControlPanel({ mode }: { mode: ControlMode }) {
             </Button>
           ) : null}
           {mode.kind === "admin" && canManage ? (
-            <Button variant="outline" asChild>
-              <Link href="/team">
-                <Users />
-                <span className="hidden sm:inline">Team</span>
-              </Link>
-            </Button>
+            <>
+              <Button variant="outline" asChild>
+                <Link href="/team">
+                  <Users />
+                  <span className="hidden sm:inline">Team</span>
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/billing">
+                  <CreditCard />
+                  <span className="hidden sm:inline">Plan</span>
+                </Link>
+              </Button>
+            </>
           ) : null}
           {mode.kind === "admin" ? (
             <Button variant="ghost" size="icon" title="Sign out" aria-label="Sign out" onClick={mode.onSignOut}>

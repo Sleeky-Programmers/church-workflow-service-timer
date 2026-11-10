@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, FileUp, Loader2, Plus, Sparkles, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { FormError } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
   const state = useTimerStore((s) => s.state)!;
   const dispatch = useTimerStore((s) => s.dispatch);
   const online = useTimerStore((s) => s.conn === "online");
+  const canManage = useTimerStore((s) => s.access.canManage);
   const [step, setStep] = useState<Step>("choose");
   const [usage, setUsage] = useState<ImportUsage | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -220,6 +222,11 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
               </div>
 
               {usageLine(usage) ? <p className="text-xs text-muted-foreground">{usageLine(usage)}</p> : null}
+              {(limitReached || noneLeft) && canManage ? (
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/billing">See plans</Link>
+                </Button>
+              ) : null}
             </div>
           ) : null}
 

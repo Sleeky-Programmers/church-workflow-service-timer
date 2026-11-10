@@ -39,6 +39,19 @@ describe("applying server data", () => {
     expect(next.settings.font).toBe("serif");
   });
 
+  it("carries the plan's branding rules into the settings every screen sees", () => {
+    const free = applySettings(
+      defaultState(),
+      serverSettings({ plan: { key: "FREE", name: "Free", customBranding: false, showMark: true } }),
+    );
+    expect(free.settings).toMatchObject({ showMark: true, customBranding: false });
+    const church = applySettings(
+      defaultState(),
+      serverSettings({ plan: { key: "CHURCH", name: "Church", customBranding: true, showMark: false } }),
+    );
+    expect(church.settings).toMatchObject({ showMark: false, customBranding: true });
+  });
+
   it("takes the session's start time from the session", () => {
     const next = applySession(emptyState(), {
       items: [{ id: "a", name: "Prayer", person: "", minutes: 8 }],

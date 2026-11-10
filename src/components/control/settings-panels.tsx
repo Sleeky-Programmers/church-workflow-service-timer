@@ -1,6 +1,7 @@
 "use client";
 
 import { Clock, Upload } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input, inputClass, Select } from "@/components/ui/input";
@@ -149,7 +150,10 @@ export function DesignPanel() {
   // Signed in, the logo goes to file storage; locally it is kept as image data.
   const onlineMode = useTimerStore((s) => s.conn !== "local");
   const online = useTimerStore((s) => s.conn === "online");
+  const canManage = useTimerStore((s) => s.access.canManage);
   const [logoBusy, setLogoBusy] = useState(false);
+  // Free plan: colour presets only, no own logo (Product Plan, section 7).
+  const brandingLocked = onlineMode && st.customBranding === false;
 
   const setLogo = async (file: File) => {
     const dataUrl = await readLogo(file);
@@ -213,7 +217,10 @@ export function DesignPanel() {
           </Field>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <fieldset
+          disabled={brandingLocked}
+          className={cn("mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5", brandingLocked && "opacity-50")}
+        >
           {(Object.keys(COLOR_LABELS) as (keyof DisplayColors)[]).map((k) => (
             <label
               key={k}
@@ -228,10 +235,23 @@ export function DesignPanel() {
               {COLOR_LABELS[k]}
             </label>
           ))}
-        </div>
+        </fieldset>
       </fieldset>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
+      {brandingLocked ? (
+        <p className="mt-4 rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+          Your own colours and logo are part of the Church plan. On the Free plan, choose a colour preset.{" "}
+          {canManage ? (
+            <Link href="/billing" className="font-medium text-primary hover:underline">
+              See plans
+            </Link>
+          ) : (
+            "Ask your timer admin about upgrading."
+          )}
+        </p>
+      ) : null}
+
+      <div className={cn("mt-4 flex flex-wrap items-center gap-3", brandingLocked && "hidden")}>
         {st.logo ? (
           // eslint-disable-next-line @next/next/no-img-element -- data URL or uploaded image, sized by CSS
           <img src={st.logo} alt="Logo preview" className="h-12 max-w-40 rounded-md border bg-muted object-contain p-1" />
@@ -274,7 +294,7 @@ export function DesignPanel() {
           </>
         ) : null}
       </div>
-      {onlineMode && !st.logo ? (
+      {onlineMode && !st.logo && !brandingLocked ? (
         <p className="mt-2 text-xs text-muted-foreground">No logo yet: the display shows your church&apos;s name.</p>
       ) : null}
     </Section>

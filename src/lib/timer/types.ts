@@ -76,6 +76,13 @@ export interface TimerSettings {
   /** Data URL in local mode; replaced by a file-storage URL in Phase 1. */
   logo: string;
   show: DisplayToggles;
+  /**
+   * From the church's plan (signed in only; local mode has neither). On the
+   * Free plan the display shows a small "Service Timer" mark, and own
+   * colours and logo are locked.
+   */
+  showMark?: boolean;
+  customBranding?: boolean;
 }
 
 export interface TimerState {
