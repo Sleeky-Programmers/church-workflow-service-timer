@@ -26,6 +26,8 @@ The API side lives in `churchWorkflow-api` (`src/modules/service-timer`, with it
 | `/display` | the control laptop | The extended-screen window, fed by the laptop over `BroadcastChannel`. Works with no internet. Press F or double-click for full screen. |
 | `/d/<link>` | any screen | A display link. No login. |
 | `/c/<link>` | volunteers' phones | The operator PIN unlocks control for 12 hours. |
+| `/team` | timer admins | Invite people as Timer Admin, Operator or Viewer; resend or cancel invites; change roles; remove people. Members with a Church Workflow role are shown but managed there. |
+| `/accept-invite?invite=…` | invited people | The link in the invite email: set a password and land in the timer for the inviter's branch. |
 
 ## Online and offline
 

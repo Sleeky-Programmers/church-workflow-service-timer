@@ -1,6 +1,6 @@
 "use client";
 
-import { LogIn, LogOut, MonitorPlay } from "lucide-react";
+import { LogIn, LogOut, MonitorPlay, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
@@ -33,6 +33,7 @@ export function ControlPanel({ mode }: { mode: ControlMode }) {
   const ready = useTimerStore((s) => s.state !== null);
   const shortcuts = useTimerStore((s) => !!s.state?.settings.shortcuts);
   const conn = useTimerStore((s) => s.conn);
+  const canManage = useTimerStore((s) => s.access.canManage);
   const unsynced = useTimerStore((s) => s.unsynced);
   const init = useTimerStore((s) => s.init);
   const dispatch = useTimerStore((s) => s.dispatch);
@@ -112,6 +113,14 @@ export function ControlPanel({ mode }: { mode: ControlMode }) {
             <Button onClick={openDisplay}>
               <MonitorPlay />
               <span className="hidden sm:inline">Open display</span>
+            </Button>
+          ) : null}
+          {mode.kind === "admin" && canManage ? (
+            <Button variant="outline" asChild>
+              <Link href="/team">
+                <Users />
+                <span className="hidden sm:inline">Team</span>
+              </Link>
             </Button>
           ) : null}
           {mode.kind === "admin" ? (
