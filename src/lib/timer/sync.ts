@@ -15,6 +15,7 @@
 import { io, type Socket } from "socket.io-client";
 import { apiOrigin, ApiError, freshAccessToken, tokens } from "@/lib/api/client";
 import { timerApi } from "@/lib/api/endpoints";
+import { lastCanManage } from "@/lib/auth/session";
 import { now, syncToServer } from "./clock";
 import { runToRecord, type ItemRun } from "./runs";
 import {
@@ -261,6 +262,7 @@ export function startSync(auth: SyncAuth, opts: SyncOptions): () => void {
       canEditSettings: h.access.kind === "admin" && h.access.canControl,
     };
     store.getState().setMeta({ conn: "online", denied: null, access });
+    if (h.access.kind === "admin") lastCanManage.set(h.access.canManage);
 
     let next = overlaySettings(applySettings(state(), h.settings), pendingSettings);
     if (h.access.kind !== "display") next = applyTemplates(next, h.templates);

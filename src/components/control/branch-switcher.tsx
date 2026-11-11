@@ -30,12 +30,13 @@ export function BranchSwitcher() {
   const current = data.activeBranchId ?? data.branches.find((b) => b.isHQ)?.id ?? data.branches[0].id;
 
   return (
-    <label className="relative flex min-w-0 flex-1 items-center md:flex-none">
+    <label className="relative flex min-w-0 items-center">
       <span className="sr-only">Branch</span>
       <Building2 className="pointer-events-none absolute left-2.5 h-4 w-4 text-muted-foreground" />
       <select
-        className="h-9 w-full min-w-0 truncate rounded-md border border-input bg-white pl-8 pr-7 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 md:w-36 lg:w-56"
+        className="h-9 w-full min-w-0 truncate rounded-md border border-input bg-white pl-8 pr-7 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
         value={current}
+        title="Branch"
         disabled={busy}
         onChange={async (e) => {
           const id = e.target.value;
