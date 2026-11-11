@@ -107,21 +107,24 @@ export interface BillingOverview {
     name: string;
     userLimit: number | null;
     importLimit: number;
+    /** Null: Church Workflow's own limits. */
+    branchLimit: number | null;
     customBranding: boolean;
     periodEnd: string | null;
   };
   plans: {
-    free: { name: string; users: number; imports: number; customBranding: boolean };
+    free: { name: string; users: number; imports: number; branches: number; customBranding: boolean };
     church: {
       name: string;
       monthlyPrice: number;
       yearlyPrice: number;
       users: number;
       imports: number;
+      branches: number;
       customBranding: boolean;
     };
   };
-  usage: { seats: number; imports: number };
+  usage: { seats: number; imports: number; branches: number };
   canPay: boolean;
   payments: { reference: string; amount: number; cycle: "monthly" | "yearly"; paidAt: string }[];
 }
@@ -138,6 +141,30 @@ export const billingApi = {
       method: "POST",
       body: { reference },
     }),
+};
+
+// ------------------------------------------------------------------ branches
+
+export interface TimerBranch {
+  id: string;
+  name: string;
+  isHQ: boolean;
+}
+
+export interface BranchList {
+  branches: TimerBranch[];
+  activeBranchId: string | null;
+  accessScope: string;
+  /** Null: Church Workflow's own limits (managed there). 0: unlimited. */
+  limit: number | null;
+  count: number;
+}
+
+export const branchesApi = {
+  list: () => api<BranchList>("/service-timer/branches"),
+  create: (name: string) => api<TimerBranch>("/service-timer/branches", { method: "POST", body: { name } }),
+  /** New tokens for another branch (the same call Church Workflow uses). */
+  switchTo: (branchId: string) => api<Tokens>("/auth/switch-branch", { method: "POST", body: { branchId } }),
 };
 
 // ------------------------------------------------------------------- reports

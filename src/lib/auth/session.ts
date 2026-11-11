@@ -6,9 +6,24 @@ import { authApi, type Profile } from "@/lib/api/endpoints";
 const PROFILE = "serviceTimer.profile";
 const LOCAL_MODE = "serviceTimer.localMode";
 
+const ONLINE = "serviceTimer.online.v1";
+
+/** The branch the signed-in session is on (from the access token), if it says. */
+export function activeBranchId(): string | null {
+  const jwt = tokens.access();
+  if (!jwt) return null;
+  try {
+    const payload = JSON.parse(atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof payload.activeBranchId === "string" ? payload.activeBranchId : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Where each kind of device keeps its copy of the timer. */
 export const storageKeys = {
-  online: "serviceTimer.online.v1",
+  /** Each branch has its own timer, so its own copy (and unsent changes). */
+  online: (branchId: string | null = activeBranchId()) => (branchId ? `${ONLINE}:${branchId}` : ONLINE),
   operator: (displayToken: string) => `serviceTimer.op.v1:${displayToken}`,
   screen: (displayToken: string) => `serviceTimer.screen.v1:${displayToken}`,
   pending: (key: string) => `${key}:pending`,
@@ -70,8 +85,14 @@ export function signIn(t: { accessToken: string; refreshToken: string }) {
 export function signOut() {
   tokens.clear();
   put(PROFILE, null);
-  put(storageKeys.online, null);
-  put(storageKeys.pending(storageKeys.online), null);
+  // Every branch's copy, and its unsent changes.
+  try {
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith(ONLINE))
+      .forEach((k) => localStorage.removeItem(k));
+  } catch {
+    // Storage blocked: nothing was kept.
+  }
 }
 
 /** Operator tokens from the PIN screen, one per display link. */
