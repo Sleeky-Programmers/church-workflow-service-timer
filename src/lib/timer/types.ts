@@ -31,6 +31,11 @@ export interface TimerRun {
   elapsedBefore: number;
   /** +1 / −1 adjustments for this run only; the item's minutes stay clean. */
   extraMs: number;
+  /**
+   * When this item was first started (kept through pauses, cleared when
+   * moving on or resetting). Names the run in service reports.
+   */
+  firstStartedAt?: number | null;
 }
 
 export interface SpeakerMessage {

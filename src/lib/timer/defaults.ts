@@ -76,6 +76,7 @@ export const freshTimer = (): TimerRun => ({
   startedAt: null,
   elapsedBefore: 0,
   extraMs: 0,
+  firstStartedAt: null,
 });
 
 export function sampleItems(): ProgramItem[] {

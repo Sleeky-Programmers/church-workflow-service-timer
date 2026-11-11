@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, LogIn, LogOut, MonitorPlay, Users } from "lucide-react";
+import { BarChart3, CreditCard, LogIn, LogOut, MonitorPlay, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
@@ -113,6 +113,14 @@ export function ControlPanel({ mode }: { mode: ControlMode }) {
             <Button onClick={openDisplay}>
               <MonitorPlay />
               <span className="hidden sm:inline">Open display</span>
+            </Button>
+          ) : null}
+          {mode.kind === "admin" ? (
+            <Button variant="outline" asChild>
+              <Link href="/reports">
+                <BarChart3 />
+                <span className="hidden sm:inline">Reports</span>
+              </Link>
             </Button>
           ) : null}
           {mode.kind === "admin" && canManage ? (

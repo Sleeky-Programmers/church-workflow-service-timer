@@ -15,7 +15,8 @@
 import { io, type Socket } from "socket.io-client";
 import { apiOrigin, ApiError, freshAccessToken, tokens } from "@/lib/api/client";
 import { timerApi } from "@/lib/api/endpoints";
-import { syncToServer } from "./clock";
+import { now, syncToServer } from "./clock";
+import { runToRecord, type ItemRun } from "./runs";
 import {
   applySession,
   applySettings,
@@ -70,16 +71,22 @@ export function startSync(auth: SyncAuth, opts: SyncOptions): () => void {
   // Unsent changes, kept across reloads.
   let unsyncedSession = false;
   let pendingSettings: PendingSettings = null;
+  // Item runs for service reports, not yet saved on the server.
+  let pendingRuns: ItemRun[] = [];
   try {
     const saved = JSON.parse(localStorage.getItem(opts.pendingKey) || "null");
     unsyncedSession = !!saved?.session;
     pendingSettings = saved?.settings ?? null;
+    pendingRuns = Array.isArray(saved?.runs) ? saved.runs : [];
   } catch {
     // Nothing saved.
   }
   const savePending = () => {
     try {
-      localStorage.setItem(opts.pendingKey, JSON.stringify({ session: unsyncedSession, settings: pendingSettings }));
+      localStorage.setItem(
+        opts.pendingKey,
+        JSON.stringify({ session: unsyncedSession, settings: pendingSettings, runs: pendingRuns }),
+      );
     } catch {
       // Storage blocked: pending changes live in memory only.
     }
@@ -195,7 +202,41 @@ export function startSync(auth: SyncAuth, opts: SyncOptions): () => void {
     }
   }
 
+  let runsTimer: ReturnType<typeof setTimeout> | undefined;
+  let pushingRuns = false;
+  const scheduleRuns = (delay = 300) => {
+    clearTimeout(runsTimer);
+    runsTimer = setTimeout(pushRuns, delay);
+  };
+
+  async function pushRuns() {
+    if (stopped || pushingRuns || !socket.connected || !pendingRuns.length) return;
+    if (!store.getState().access.canControl) return;
+    pushingRuns = true;
+    const sending = pendingRuns.slice(0, 50);
+    let retry = false;
+    try {
+      const ack = await socket.timeout(8000).emitWithAck("runs:push", { runs: sending });
+      if (ack?.ok) {
+        // Keep any run that got a newer snapshot while this was in flight.
+        pendingRuns = pendingRuns.filter((r) => !sending.includes(r));
+      } else retry = true;
+    } catch {
+      retry = true;
+    } finally {
+      pushingRuns = false;
+      savePending();
+      if (retry) scheduleRuns(RETRY_MS * 3);
+      else if (pendingRuns.length) scheduleRuns(0);
+    }
+  }
+
   const offLocal = onLocalChange((prev, next) => {
+    const run = runToRecord(prev, next, now());
+    if (run) {
+      pendingRuns = [...pendingRuns.filter((r) => r.id !== run.id), run].slice(-200);
+      scheduleRuns();
+    }
     if (sessionChanged(prev, next)) {
       unsyncedSession = true;
       changeSeq += 1;
@@ -235,6 +276,7 @@ export function startSync(auth: SyncAuth, opts: SyncOptions): () => void {
     savePending();
     if (unsyncedSession) schedulePush(0);
     if (pendingSettings) scheduleSettings(0);
+    if (pendingRuns.length) scheduleRuns(500);
   });
 
   socket.on("session", ({ session, serverNow }: { session: ServerSession; serverNow: number }) => {
@@ -307,6 +349,7 @@ export function startSync(auth: SyncAuth, opts: SyncOptions): () => void {
     stopped = true;
     clearTimeout(pushTimer);
     clearTimeout(settingsTimer);
+    clearTimeout(runsTimer);
     offLocal();
     document.removeEventListener("visibilitychange", wake);
     window.removeEventListener("online", wake);
