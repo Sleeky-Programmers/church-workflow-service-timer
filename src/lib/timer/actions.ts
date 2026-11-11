@@ -19,6 +19,7 @@ export const toggleRun: Recipe = (s, now) => {
   } else {
     t.running = true;
     t.startedAt = now;
+    if (t.firstStartedAt == null) t.firstStartedAt = now;
   }
 };
 
@@ -33,6 +34,7 @@ export const goTo =
     if (was && s.settings.keepRunning) {
       s.timer.running = true;
       s.timer.startedAt = now;
+      s.timer.firstStartedAt = now;
     }
   };
 

@@ -140,6 +140,42 @@ export const billingApi = {
     }),
 };
 
+// ------------------------------------------------------------------- reports
+
+export interface ServiceSummary {
+  /** "YYYY-MM-DD" in the branch's time zone. */
+  date: string;
+  startedAt: string;
+  endedAt: string;
+  items: number;
+  plannedMs: number;
+  actualMs: number;
+  overMs: number;
+}
+
+export interface ServiceReport {
+  date: string;
+  startedAt: string | null;
+  endedAt: string | null;
+  plannedMs: number;
+  actualMs: number;
+  overMs: number;
+  items: {
+    name: string;
+    person: string;
+    startedAt: string;
+    plannedMs: number;
+    actualMs: number;
+    extraMs: number;
+    overMs: number;
+  }[];
+}
+
+export const reportsApi = {
+  list: (days = 90) => api<ServiceSummary[]>(`/service-timer/reports?days=${days}`),
+  service: (date: string) => api<ServiceReport>(`/service-timer/reports/${encodeURIComponent(date)}`),
+};
+
 // -------------------------------------------------------------- smart import
 
 export interface ImportUsage {
