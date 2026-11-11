@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { ChurchWorkflowPlanCard } from "./church-workflow-plan-card";
 import { ApiError } from "@/lib/api/client";
 import { billingApi, type BillingOverview } from "@/lib/api/endpoints";
 import { isSignedIn } from "@/lib/auth/session";
@@ -280,6 +281,9 @@ export function BillingPage() {
                       {naira(data.autoRenew.cycle === "yearly" ? church.yearlyPrice : church.monthlyPrice)} to the card you
                       paid with on {date(data.autoRenew.nextChargeAt)}, for another{" "}
                       {data.autoRenew.cycle === "yearly" ? "year" : "month"}.
+                      {plan.key === "CHURCH_WORKFLOW"
+                        ? " The timer is included in Church Workflow now, so you can turn this off and stop paying for it separately."
+                        : ""}
                     </p>
                     <Button variant="outline" className="mt-4" onClick={stopAutoRenew} disabled={stopping}>
                       {stopping ? <Loader2 className="animate-spin" /> : null}
@@ -288,11 +292,9 @@ export function BillingPage() {
                   </div>
                 </div>
               </Card>
-            ) : (
-              <Card className="p-6 text-sm text-muted-foreground">
-                The Service Timer is included in your Church Workflow plan, so there&apos;s nothing extra to pay.
-              </Card>
-            )}
+            ) : null}
+
+            <ChurchWorkflowPlanCard onChange={() => void load()} />
 
             {data.payments.length ? (
               <Card>

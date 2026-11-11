@@ -155,6 +155,42 @@ export const billingApi = {
     }),
 };
 
+// ----------------------------------------------------------- Church Workflow
+
+/**
+ * member: came through Church Workflow; available: timer-only, not tried
+ * yet; trial / active: started from the timer; ended: trial or plan over.
+ */
+export type ChurchWorkflowState = "member" | "available" | "trial" | "active" | "ended";
+
+export interface ChurchWorkflowStatus {
+  state: ChurchWorkflowState;
+  trialDays: number;
+  trialEndsAt: string | null;
+  /** Church Workflow's address; null if the server doesn't know it. */
+  url: string | null;
+}
+
+export interface UpcomingService {
+  id: string;
+  title: string;
+  /** "YYYY-MM-DD". */
+  date: string;
+  /** "HH:MM", or null if Church Workflow has none. */
+  startTime: string | null;
+  endTime: string | null;
+  location: string | null;
+}
+
+export const churchWorkflowApi = {
+  status: () => api<ChurchWorkflowStatus>("/service-timer/church-workflow"),
+  /** Starts the Church Workflow trial the first time (timer admins). */
+  start: () => api<ChurchWorkflowStatus>("/service-timer/church-workflow/start", { method: "POST" }),
+  services: () => api<UpcomingService[]>("/service-timer/church-workflow/services"),
+  /** A one-time code for opening Church Workflow already signed in. */
+  handoff: () => api<{ code: string; expiresIn: number }>("/auth/handoff", { method: "POST" }),
+};
+
 // ------------------------------------------------------------------ branches
 
 export interface TimerBranch {
