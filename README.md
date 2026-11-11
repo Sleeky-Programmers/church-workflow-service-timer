@@ -1,4 +1,4 @@
-# Service Timer
+# Church Workflow Service Timer
 
 A countdown timer for church services that keeps running when the internet drops. Built by Sleeky Programmers as a standalone product and an entry point to Church Workflow.
 
