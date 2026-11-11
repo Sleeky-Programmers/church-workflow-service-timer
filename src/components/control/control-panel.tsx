@@ -1,15 +1,17 @@
 "use client";
 
-import { BarChart3, CreditCard, LogIn, LogOut, MonitorPlay, Users } from "lucide-react";
+import { BarChart3, Building2, CreditCard, LogIn, LogOut, MonitorPlay, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { storageKeys } from "@/lib/auth/session";
 import { addTime, goTo, toggleRun } from "@/lib/timer/actions";
 import { emptyState } from "@/lib/timer/remote";
 import { LOCAL_KEY, useTimerStore } from "@/lib/timer/store";
 import { startSync } from "@/lib/timer/sync";
+import { BranchSwitcher } from "./branch-switcher";
 import { ConnectionBadge } from "./connection-badge";
 import { NowPanel } from "./now-panel";
 import { ProgramPanel } from "./program-panel";
@@ -23,9 +25,21 @@ export type ControlMode =
   | { kind: "admin"; userName: string; onSignOut: () => void; onSignedOut: () => void }
   | { kind: "operator"; displayToken: string; operatorToken: string; onDenied: (message: string) => void };
 
+/** A header link: icon only until the screen is wide enough for every label. */
+function NavLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+  return (
+    <Button variant="outline" asChild>
+      <Link href={href} title={label} aria-label={label}>
+        {icon}
+        <span className="hidden xl:inline">{label}</span>
+      </Link>
+    </Button>
+  );
+}
+
 function storageKeyFor(mode: ControlMode) {
   if (mode.kind === "local") return LOCAL_KEY;
-  if (mode.kind === "admin") return storageKeys.online;
+  if (mode.kind === "admin") return storageKeys.online();
   return storageKeys.operator(mode.displayToken);
 }
 
@@ -96,7 +110,8 @@ export function ControlPanel({ mode }: { mode: ControlMode }) {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-10 border-b bg-white pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 md:px-6">
+        {/* Phones: branch and page links wrap onto a second row. */}
+        <div className="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 md:flex-nowrap md:px-6 md:py-0">
           <Image src="/assets/logo/cw-mark.png" alt="Church Workflow" width={32} height={32} priority />
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold leading-tight">Service Timer</p>
@@ -110,34 +125,26 @@ export function ControlPanel({ mode }: { mode: ControlMode }) {
           </div>
           <ConnectionBadge />
           {mode.kind !== "operator" ? (
-            <Button onClick={openDisplay}>
+            <Button onClick={openDisplay} aria-label="Open display">
               <MonitorPlay />
-              <span className="hidden sm:inline">Open display</span>
+              <span className={cn("hidden", mode.kind === "admin" ? "lg:inline" : "sm:inline")}>Open display</span>
             </Button>
           ) : null}
           {mode.kind === "admin" ? (
-            <Button variant="outline" asChild>
-              <Link href="/reports">
-                <BarChart3 />
-                <span className="hidden sm:inline">Reports</span>
-              </Link>
-            </Button>
-          ) : null}
-          {mode.kind === "admin" && canManage ? (
-            <>
-              <Button variant="outline" asChild>
-                <Link href="/team">
-                  <Users />
-                  <span className="hidden sm:inline">Team</span>
-                </Link>
-              </Button>
-              <Button variant="outline" asChild>
-                <Link href="/billing">
-                  <CreditCard />
-                  <span className="hidden sm:inline">Plan</span>
-                </Link>
-              </Button>
-            </>
+            <nav
+              aria-label="Timer pages"
+              className="order-last flex w-full min-w-0 items-center gap-2 md:order-none md:w-auto md:gap-3"
+            >
+              <BranchSwitcher />
+              <NavLink href="/reports" icon={<BarChart3 />} label="Reports" />
+              {canManage ? (
+                <>
+                  <NavLink href="/team" icon={<Users />} label="Team" />
+                  <NavLink href="/branches" icon={<Building2 />} label="Branches" />
+                  <NavLink href="/billing" icon={<CreditCard />} label="Plan" />
+                </>
+              ) : null}
+            </nav>
           ) : null}
           {mode.kind === "admin" ? (
             <Button variant="ghost" size="icon" title="Sign out" aria-label="Sign out" onClick={mode.onSignOut}>

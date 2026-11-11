@@ -177,6 +177,7 @@ export function BillingPage() {
               <div className="mt-4 divide-y border-t">
                 <Usage label="People using the timer" used={data.usage.seats} limit={plan.userLimit} />
                 <Usage label="Smart imports this month" used={data.usage.imports} limit={plan.importLimit} />
+                <Usage label="Branches" used={data.usage.branches} limit={plan.branchLimit} />
                 <div className="flex items-center justify-between gap-3 py-2 text-sm">
                   <span className="text-muted-foreground">Own logo and colours</span>
                   <span className="font-medium">{plan.customBranding ? "Yes" : "Colour presets only"}</span>
@@ -206,6 +207,8 @@ export function BillingPage() {
                     <li className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-success" />Everything in Free</li>
                     <li className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-success" />{limitText(church.users)} people</li>
                     <li className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-success" />{limitText(church.imports)} smart imports a month</li>
+                    <li className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-success" />{limitText(church.branches)} branches, each with its own timer</li>
+                    <li className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-success" />Service reports</li>
                     <li className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-success" />Your own logo and colours, no mark</li>
                   </ul>
                   <div className="mt-5 flex flex-col gap-2">
