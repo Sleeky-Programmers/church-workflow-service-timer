@@ -5,6 +5,7 @@ import { authApi, type Profile } from "@/lib/api/endpoints";
 
 const PROFILE = "serviceTimer.profile";
 const LOCAL_MODE = "serviceTimer.localMode";
+const CAN_MANAGE = "serviceTimer.canManage";
 
 const ONLINE = "serviceTimer.online.v1";
 
@@ -77,6 +78,16 @@ export async function loadProfile(): Promise<Profile | null> {
   }
 }
 
+/**
+ * Whether the user was a timer admin when the server last said (it says so
+ * when the timer connects). The sidebar uses it on pages that open
+ * straight from a link, before the timer has connected.
+ */
+export const lastCanManage = {
+  get: () => get(CAN_MANAGE) === "1",
+  set: (on: boolean) => put(CAN_MANAGE, on ? "1" : null),
+};
+
 export function signIn(t: { accessToken: string; refreshToken: string }) {
   tokens.set(t);
   localMode.set(false);
@@ -85,6 +96,7 @@ export function signIn(t: { accessToken: string; refreshToken: string }) {
 export function signOut() {
   tokens.clear();
   put(PROFILE, null);
+  put(CAN_MANAGE, null);
   // Every branch's copy, and its unsent changes.
   try {
     Object.keys(localStorage)

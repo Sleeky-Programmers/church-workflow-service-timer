@@ -1,10 +1,10 @@
 "use client";
 
 import { ArrowLeft, BarChart3, ChevronRight, Loader2, Lock } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ApiError } from "@/lib/api/client";
@@ -237,24 +237,24 @@ export function ReportsPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 border-b bg-white">
-        <div className="mx-auto flex h-16 max-w-4xl items-center gap-3 px-4 md:px-6">
-          <Button variant="ghost" size="icon" asChild aria-label={valid ? "Back to all services" : "Back to the timer"}>
-            <Link href={valid ? "/reports" : "/control"}>
+    <AppShell
+      title="Reports"
+      subtitle="How each service ran against its program"
+      actions={
+        valid ? (
+          <Button variant="outline" asChild>
+            <Link href="/reports">
               <ArrowLeft />
+              <span className="hidden sm:inline">All services</span>
+              <span className="sr-only sm:hidden">All services</span>
             </Link>
           </Button>
-          <Image src="/assets/logo/cw-mark.png" alt="Church Workflow" width={32} height={32} />
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold leading-tight">Reports</p>
-            <p className="text-xs text-muted-foreground">How each service ran against its program</p>
-          </div>
-        </div>
-      </header>
+        ) : null
+      }
+    >
       <main className="mx-auto max-w-4xl space-y-6 p-4 md:p-6">
         {valid ? <ServiceDetail date={date!} /> : <ServiceList />}
       </main>
-    </div>
+    </AppShell>
   );
 }

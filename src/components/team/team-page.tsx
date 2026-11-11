@@ -1,11 +1,11 @@
 "use client";
 
-import { ArrowLeft, Mail, RotateCw, Trash2, UserPlus, X } from "lucide-react";
-import Image from "next/image";
+import { Mail, RotateCw, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { FormError } from "@/components/auth/auth-shell";
+import { AppShell } from "@/components/layout/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -86,22 +86,7 @@ export function TeamPage() {
   const full = !!team && team.seats.limit > 0 && team.seats.used >= team.seats.limit;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 border-b bg-white">
-        <div className="mx-auto flex h-16 max-w-4xl items-center gap-3 px-4 md:px-6">
-          <Button variant="ghost" size="icon" asChild aria-label="Back to the timer">
-            <Link href="/control">
-              <ArrowLeft />
-            </Link>
-          </Button>
-          <Image src="/assets/logo/cw-mark.png" alt="Church Workflow" width={32} height={32} />
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold leading-tight">Team</p>
-            <p className="text-xs text-muted-foreground">Who can use your service timer</p>
-          </div>
-        </div>
-      </header>
-
+    <AppShell title="Team" subtitle="Who can use your service timer">
       <main className="mx-auto max-w-4xl space-y-6 p-4 md:p-6">
         {loadError ? (
           <Card className="p-6">
@@ -302,6 +287,6 @@ export function TeamPage() {
           </>
         ) : null}
       </main>
-    </div>
+    </AppShell>
   );
 }

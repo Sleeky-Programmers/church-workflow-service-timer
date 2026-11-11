@@ -1,9 +1,10 @@
 "use client";
 
-import { BarChart3, Building2, CreditCard, LogIn, LogOut, MonitorPlay, Users } from "lucide-react";
+import { LogIn, MonitorPlay } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
+import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { storageKeys } from "@/lib/auth/session";
@@ -11,7 +12,6 @@ import { addTime, goTo, toggleRun } from "@/lib/timer/actions";
 import { emptyState } from "@/lib/timer/remote";
 import { LOCAL_KEY, useTimerStore } from "@/lib/timer/store";
 import { startSync } from "@/lib/timer/sync";
-import { BranchSwitcher } from "./branch-switcher";
 import { ChurchWorkflowCard } from "./church-workflow-card";
 import { ConnectionBadge } from "./connection-badge";
 import { NowPanel } from "./now-panel";
@@ -26,18 +26,6 @@ export type ControlMode =
   | { kind: "admin"; userName: string; onSignOut: () => void; onSignedOut: () => void }
   | { kind: "operator"; displayToken: string; operatorToken: string; onDenied: (message: string) => void };
 
-/** A header link: icon only until the screen is wide enough for every label. */
-function NavLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
-  return (
-    <Button variant="outline" asChild>
-      <Link href={href} title={label} aria-label={label}>
-        {icon}
-        <span className="hidden xl:inline">{label}</span>
-      </Link>
-    </Button>
-  );
-}
-
 function storageKeyFor(mode: ControlMode) {
   if (mode.kind === "local") return LOCAL_KEY;
   if (mode.kind === "admin") return storageKeys.online();
@@ -48,7 +36,6 @@ export function ControlPanel({ mode }: { mode: ControlMode }) {
   const ready = useTimerStore((s) => s.state !== null);
   const shortcuts = useTimerStore((s) => !!s.state?.settings.shortcuts);
   const conn = useTimerStore((s) => s.conn);
-  const canManage = useTimerStore((s) => s.access.canManage);
   const unsynced = useTimerStore((s) => s.unsynced);
   const init = useTimerStore((s) => s.init);
   const dispatch = useTimerStore((s) => s.dispatch);
@@ -108,61 +95,16 @@ export function ControlPanel({ mode }: { mode: ControlMode }) {
 
   if (!ready) return null;
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 border-b bg-white pt-[env(safe-area-inset-top)]">
-        {/* Phones: branch and page links wrap onto a second row. */}
-        <div className="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 md:flex-nowrap md:px-6 md:py-0">
-          <Image src="/assets/logo/cw-mark.png" alt="Church Workflow" width={32} height={32} priority />
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold leading-tight">Service Timer</p>
-            <p className="hidden truncate text-xs text-muted-foreground sm:block">
-              {mode.kind === "admin"
-                ? mode.userName
-                : mode.kind === "operator"
-                  ? "Operator (PIN)"
-                  : "by Church Workflow"}
-            </p>
-          </div>
-          <ConnectionBadge />
-          {mode.kind !== "operator" ? (
-            <Button onClick={openDisplay} aria-label="Open display">
-              <MonitorPlay />
-              <span className={cn("hidden", mode.kind === "admin" ? "lg:inline" : "sm:inline")}>Open display</span>
-            </Button>
-          ) : null}
-          {mode.kind === "admin" ? (
-            <nav
-              aria-label="Timer pages"
-              className="order-last flex w-full min-w-0 items-center gap-2 md:order-none md:w-auto md:gap-3"
-            >
-              <BranchSwitcher />
-              <NavLink href="/reports" icon={<BarChart3 />} label="Reports" />
-              {canManage ? (
-                <>
-                  <NavLink href="/team" icon={<Users />} label="Team" />
-                  <NavLink href="/branches" icon={<Building2 />} label="Branches" />
-                  <NavLink href="/billing" icon={<CreditCard />} label="Plan" />
-                </>
-              ) : null}
-            </nav>
-          ) : null}
-          {mode.kind === "admin" ? (
-            <Button variant="ghost" size="icon" title="Sign out" aria-label="Sign out" onClick={mode.onSignOut}>
-              <LogOut />
-            </Button>
-          ) : null}
-          {mode.kind === "local" ? (
-            <Button variant="outline" asChild>
-              <Link href="/login">
-                <LogIn />
-                <span className="hidden sm:inline">Sign in</span>
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-      </header>
+  const displayButton =
+    mode.kind !== "operator" ? (
+      <Button onClick={openDisplay} aria-label="Open display">
+        <MonitorPlay />
+        <span className="hidden sm:inline">Open display</span>
+      </Button>
+    ) : null;
 
+  const body = (
+    <>
       {conn === "offline" ? (
         <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-800" role="status">
           {unsynced
@@ -171,7 +113,15 @@ export function ControlPanel({ mode }: { mode: ControlMode }) {
         </div>
       ) : null}
 
-      <main className="mx-auto grid max-w-7xl gap-6 p-4 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] md:p-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
+      {/* Beside the sidebar there's only room for two columns on wider screens. */}
+      <main
+        className={cn(
+          "mx-auto grid max-w-7xl gap-6 p-4 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] md:p-6",
+          mode.kind === "admin"
+            ? "xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)] xl:items-start"
+            : "lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start",
+        )}
+      >
         <NowPanel />
         <div className="flex min-w-0 flex-col gap-6">
           <ProgramPanel />
@@ -182,6 +132,52 @@ export function ControlPanel({ mode }: { mode: ControlMode }) {
           <SharingPanel mode={mode.kind} />
         </div>
       </main>
+    </>
+  );
+
+  if (mode.kind === "admin") {
+    return (
+      <AppShell
+        title="Timer"
+        subtitle="Run the service and control what the display shows"
+        onSignOut={mode.onSignOut}
+        actions={
+          <>
+            <ConnectionBadge />
+            {displayButton}
+          </>
+        }
+      >
+        {body}
+      </AppShell>
+    );
+  }
+
+  // Local mode and PIN operators have no account pages, so no sidebar.
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="sticky top-0 z-10 border-b bg-white pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-3 px-4 md:px-6">
+          <Image src="/assets/logo/cw-mark.png" alt="Church Workflow" width={32} height={32} priority />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold leading-tight">Service Timer</p>
+            <p className="hidden truncate text-xs text-muted-foreground sm:block">
+              {mode.kind === "operator" ? "Operator (PIN)" : "by Church Workflow"}
+            </p>
+          </div>
+          <ConnectionBadge />
+          {displayButton}
+          {mode.kind === "local" ? (
+            <Button variant="outline" asChild>
+              <Link href="/login">
+                <LogIn />
+                <span className="hidden sm:inline">Sign in</span>
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </header>
+      {body}
     </div>
   );
 }

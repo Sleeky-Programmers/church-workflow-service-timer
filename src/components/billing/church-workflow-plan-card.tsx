@@ -80,7 +80,7 @@ export function ChurchWorkflowPlanCard({ onChange }: { onChange?: () => void }) 
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold">{c.title}</h3>
           <p className="mt-1 text-sm text-muted-foreground">{c.text}</p>
-          <Button className="mt-4" variant={c.start ? "default" : "outline"} onClick={() => open(!!c.start)} disabled={busy}>
+          <Button className="mt-4 h-auto min-h-10 whitespace-normal py-2 text-left" variant={c.start ? "default" : "outline"} onClick={() => open(!!c.start)} disabled={busy}>
             {busy ? <Loader2 className="animate-spin" /> : <ExternalLink />}
             {c.action}
           </Button>
