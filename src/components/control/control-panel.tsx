@@ -12,6 +12,7 @@ import { emptyState } from "@/lib/timer/remote";
 import { LOCAL_KEY, useTimerStore } from "@/lib/timer/store";
 import { startSync } from "@/lib/timer/sync";
 import { BranchSwitcher } from "./branch-switcher";
+import { ChurchWorkflowCard } from "./church-workflow-card";
 import { ConnectionBadge } from "./connection-badge";
 import { NowPanel } from "./now-panel";
 import { ProgramPanel } from "./program-panel";
@@ -174,6 +175,7 @@ export function ControlPanel({ mode }: { mode: ControlMode }) {
         <NowPanel />
         <div className="flex min-w-0 flex-col gap-6">
           <ProgramPanel />
+          {mode.kind === "admin" ? <ChurchWorkflowCard /> : null}
           <DisplayTogglesPanel />
           <ServiceSettingsPanel />
           <DesignPanel />
