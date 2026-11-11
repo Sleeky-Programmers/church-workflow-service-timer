@@ -125,17 +125,29 @@ export interface BillingOverview {
     };
   };
   usage: { seats: number; imports: number; branches: number };
+  /** False for Church Workflow churches, and while auto-renew is on. */
   canPay: boolean;
-  payments: { reference: string; amount: number; cycle: "monthly" | "yearly"; paidAt: string }[];
+  /** Set while Paystack renews the plan by itself. */
+  autoRenew: { cycle: "monthly" | "yearly"; nextChargeAt: string } | null;
+  payments: {
+    reference: string;
+    amount: number;
+    cycle: "monthly" | "yearly";
+    paidAt: string;
+    /** Charged automatically rather than at checkout. */
+    renewal?: boolean;
+  }[];
 }
 
 export const billingApi = {
   overview: () => api<BillingOverview>("/service-timer/billing"),
-  checkout: (cycle: "monthly" | "yearly") =>
+  checkout: (cycle: "monthly" | "yearly", autoRenew = false) =>
     api<{ reference: string; authorizationUrl: string }>("/service-timer/billing/checkout", {
       method: "POST",
-      body: { cycle },
+      body: { cycle, autoRenew },
     }),
+  cancelAutoRenew: () =>
+    api<{ autoRenew: false }>("/service-timer/billing/auto-renew/cancel", { method: "POST" }),
   confirm: (reference: string) =>
     api<{ status: "pending" | "success" | "failed" }>("/service-timer/billing/confirm", {
       method: "POST",

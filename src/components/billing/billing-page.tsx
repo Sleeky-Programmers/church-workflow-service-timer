@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Check, CreditCard, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, CreditCard, Loader2, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -9,6 +9,7 @@ import { FormError } from "@/components/auth/auth-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { ApiError } from "@/lib/api/client";
 import { billingApi, type BillingOverview } from "@/lib/api/endpoints";
 import { isSignedIn } from "@/lib/auth/session";
@@ -46,6 +47,9 @@ export function BillingPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [paying, setPaying] = useState<"monthly" | "yearly" | null>(null);
+  // Off unless the payer asks: a card is only kept on file by choice.
+  const [autoRenew, setAutoRenew] = useState(false);
+  const [stopping, setStopping] = useState(false);
 
   const load = useCallback(() => {
     return billingApi
@@ -99,11 +103,28 @@ export function BillingPage() {
     setPaying(cycle);
     setError(null);
     try {
-      const { authorizationUrl } = await billingApi.checkout(cycle);
+      const { authorizationUrl } = await billingApi.checkout(cycle, autoRenew);
       window.location.assign(authorizationUrl);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Couldn't start the payment. Try again.");
       setPaying(null);
+    }
+  };
+
+  const stopAutoRenew = async () => {
+    if (!data?.autoRenew) return;
+    const until = date(data.autoRenew.nextChargeAt);
+    if (!confirm(`Turn off auto-renew? You keep the Church plan until ${until}, then you can pay again by hand.`)) return;
+    setStopping(true);
+    setError(null);
+    try {
+      await billingApi.cancelAutoRenew();
+      await load();
+      setResult({ ok: true, text: `Auto-renew is off. You're on the Church plan until ${until}.` });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Couldn't turn off auto-renew. Try again.");
+    } finally {
+      setStopping(false);
     }
   };
 
@@ -167,7 +188,9 @@ export function BillingPage() {
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Current plan</p>
                   <h2 className="mt-1 text-xl font-semibold leading-tight">{plan.name}</h2>
                   {onChurch && plan.periodEnd ? (
-                    <p className="mt-1 text-sm text-muted-foreground">Paid until {date(plan.periodEnd)}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {data.autoRenew ? `Renews on ${date(data.autoRenew.nextChargeAt)}` : `Paid until ${date(plan.periodEnd)}`}
+                    </p>
                   ) : null}
                 </div>
                 <Badge variant={plan.key === "FREE" ? "outline" : "default"} shape="pill">
@@ -221,12 +244,50 @@ export function BillingPage() {
                       {onChurch ? "Add a year" : "Pay for a year"} · {naira(church.yearlyPrice)}
                       {yearlySaving > 0 ? <span className="text-xs font-normal">(save {naira(yearlySaving)})</span> : null}
                     </Button>
+                    <label className="mt-1 flex items-start gap-3 rounded-md border p-3 text-sm">
+                      <Switch
+                        checked={autoRenew}
+                        onCheckedChange={setAutoRenew}
+                        disabled={!!paying}
+                        aria-describedby="auto-renew-help"
+                        className="mt-0.5"
+                      />
+                      <span>
+                        <span className="font-medium">Renew automatically</span>
+                        <span id="auto-renew-help" className="block text-xs text-muted-foreground">
+                          Paystack charges the same card when each month or year you pay for ends. Turn it off here any
+                          time.
+                        </span>
+                      </span>
+                    </label>
                     <p className="text-xs text-muted-foreground">
-                      Paid securely with Paystack. No automatic renewal: pay again to extend.
+                      Paid securely with Paystack.
+                      {autoRenew ? "" : " Without auto-renew, pay again to extend."}
                     </p>
                   </div>
                 </Card>
               </div>
+            ) : data.autoRenew ? (
+              <Card className="p-6">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <RefreshCw className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold">Auto-renew is on</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Paystack will charge{" "}
+                      {naira(data.autoRenew.cycle === "yearly" ? church.yearlyPrice : church.monthlyPrice)} to the card you
+                      paid with on {date(data.autoRenew.nextChargeAt)}, for another{" "}
+                      {data.autoRenew.cycle === "yearly" ? "year" : "month"}.
+                    </p>
+                    <Button variant="outline" className="mt-4" onClick={stopAutoRenew} disabled={stopping}>
+                      {stopping ? <Loader2 className="animate-spin" /> : null}
+                      Turn off auto-renew
+                    </Button>
+                  </div>
+                </div>
+              </Card>
             ) : (
               <Card className="p-6 text-sm text-muted-foreground">
                 The Service Timer is included in your Church Workflow plan, so there&apos;s nothing extra to pay.
@@ -241,6 +302,7 @@ export function BillingPage() {
                     <li key={p.reference} className="flex flex-wrap justify-between gap-2 py-3">
                       <span>
                         {date(p.paidAt)} · {p.cycle === "yearly" ? "A year" : "A month"}
+                        {p.renewal ? <span className="text-muted-foreground"> · renewed automatically</span> : null}
                       </span>
                       <span className="font-medium tabular-nums">{naira(p.amount)}</span>
                     </li>
